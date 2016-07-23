@@ -1,0 +1,76 @@
+			<!-- panel left -->
+			<div data-role="panel" id="leftpanel" data-display="overlay" data-position-fixed="true" >
+
+				<div class='nd2-sidepanel-profile wow fadeInDown'>
+					<img class='profile-background' src="img/head_bg.jpg" />
+					<div class="row">
+						<div class='col-xs-4 center-xs'>
+							<div class='box'>
+								<img class="profile-thumbnail" src="img/head.jpg" />
+							</div>
+						</div>
+						<div class='col-xs-8'>
+							<div class='box profile-text'>
+								<strong>Welcome User</strong>
+								<span class='subline' id="username"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+				<ul data-role="listview" data-inset="false">
+					<li data-role="list-divider">List Tempat Ibadah</li>
+				</ul>
+				
+				<ul data-role="listview" data-collapsed-icon="carat-d" data-expanded-icon="carat-d" data-iconpos="left" id="list_tempat_ibadah">
+					
+				</ul>
+                    
+				<hr class="inset">
+				<ul data-role="listview" data-inset="false">
+					<li data-role="list-divider">Other</li>
+				</ul>
+				<div data-role="collapsible" data-inset="false" data-collapsed-icon="carat-d" data-expanded-icon="carat-d" data-iconpos="right">
+					<h3>Profile</h3>
+					<ul data-role="listview" data-icon="false">
+						<li><a href="login.html?aksi=logout" data-ajax='false'>Logout</a></li>
+					</ul>
+				</div>
+			</div>
+			<!-- /panel left -->
+            <script type="text/javascript">
+                $(document).ready(function(){
+                    html5sql.process('select * from login_user;', 
+                        function(transaction, results){
+                            if(results.rows.length > 0){
+                                $("#username").html(results.rows[0]['nama_user']);
+                            }else{
+                                 window.location = "login.html"; 
+                            }
+                        }, 
+                        function(error, statement){
+                            console.error("Error: " + error.message + " when processing " + statement);
+                    });
+                     $.ajax({
+                        url: baseUrl+"/list_tempat.php",
+                        dataType: "jsonp",
+                        async: true, 
+                        success: function(value){
+                            if(value['total'] > 0){
+                                var nilai =value["value"]; 
+                                $.each(nilai, function(index,v) {                        
+                                      //console.log(v)  ;
+                                    $("#list_tempat_ibadah").append('<li ><a class="waves-effect waves-button" href="list_tempat.html?kode='+v['id_tipe']+'" data-ajax="false" >'+v['nama_tempat']+'</a></li>');
+                                });
+                                $("#list_tempat_ibadah").listview('refresh');
+                            }
+                        },
+                        error: function (request,error) {
+                            alert('Network error has occurred please try again!');
+                            console.error(error);
+                        }
+                    });
+                
+                })
+            </script>                    

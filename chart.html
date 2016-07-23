@@ -1,0 +1,202 @@
+
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Sensor</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+		<link rel="stylesheet" href="font-awesome-4.5.0/css/font-awesome.min.css" />
+		<link rel="stylesheet" href="css/jquery.mobile.min.css" />
+		<link rel="stylesheet" href="vendor/waves/waves.min.css" />
+		<link rel="stylesheet" href="vendor/wow/animate.css" />
+		<link rel="stylesheet" href="css/nativedroid2.css" />
+        <link rel="stylesheet" href="css/nativedroid2.color.green.css" />
+				<style>
+					/* Prevent FOUC */
+					body { opacity: 0; }
+				</style>
+		<script src="js/jquery.js"></script>
+		<script src="js/jquery-ui.min.js"></script>
+		<script src="js/jquery.mobile.min.js"></script>
+		<script src="vendor/waves/waves.min.js"></script>
+		<script src="vendor/wow/wow.min.js"></script>
+        <script src="vendor/jquery.canvasjs.min.js"></script>
+		<script src="js/nativedroid2.js"></script>
+        <script src="js/html5sql.js"></script>
+		<script src="nd2settings.js"></script>
+
+	</head>
+
+
+<body>
+
+
+		<div data-role="page">
+
+			<nd2-include data-src="panel.left.html"></nd2-include>
+
+			<div data-role="header" data-position="fixed" class="wow fadeIn">
+				<a href="#leftpanel" class="ui-btn ui-btn-left wow fadeIn" data-wow-delay='0.8s'><i class="zmdi zmdi-menu"></i></a>
+				<h1 class="wow fadeIn" data-wow-delay='0.4s' id="title_header" >Sensor Data</h1>
+			</div>
+
+
+			<div role="main" class="ui-content wow fadeIn" data-inset="false" data-wow-delay="0.2s">
+				<nd2-ad data-banner="sample.banner"></nd2-ad>
+            <!-- Simple Card with Title !-->
+
+				<div class="nd2-card">
+
+					<div class="card-title has-avatar">
+                        <i class="card-avatar" id="iconSensor" style="font-size:30px;background:white;"></i>
+						<h3 class="card-primary-title" id="namaSensor">-</h3>
+						<h5 class="card-subtitle" id="namaType">-</h5>
+					</div>
+
+
+					<div class="card-supporting-text has-action">
+						<ul data-role="listview" data-icon="false" id="listType">
+                            <li data-role="list-divider">
+                                Chart with 50 Last Data
+                            </li>
+                        </ul>
+                        <div id="chartContainer" style="height:300px; width:100%">
+                        
+                        </div>
+
+					</div>
+
+
+				</div>
+
+
+			
+			
+			<hr />
+
+			</div>
+
+		</div>
+    <script type="text/javascript">
+        window.dps = []; // dataPoints
+        $(document).ready(function(){
+            function getValue(typeSensor , kodeSensor){ 
+           /* Chart JS */
+
+
+                var xVal = 0;
+                var yVal = 100;	
+                var updateInterval = 3000;
+                var dataLength = 500; // number of dataPoints visible at any point
+
+                    var updateChart = function () {
+                            $.ajax({
+                                url: baseUrl+"/maindata.php?sensor_type="+typeSensor['kode_type']+"&limit=50&node_sensor="+kodeSensor,
+                                dataType: "jsonp",
+                                async: true, 
+                                success: function(value_sensor){
+                                    //console.log(kodeSensor);
+                                    if(value_sensor['total'] > 0){
+                                        dps = [];
+                                        var nilai = value_sensor['value'];
+                                        
+                                         $.each(nilai, function(nilai,v) {                        
+                                            
+                                            dps.push({
+                                                x: parseFloat(v['id']),
+                                                y: parseFloat(v['value'])
+                                            });     
+                                        });
+
+                                            var chart = new CanvasJS.Chart("chartContainer",{
+                                                zoomEnabled: true,
+                                                title :{
+                                                    text: typeSensor['nama_type']
+                                                },			
+                                                data: [{
+                                                    type: "line",
+                                                    dataPoints: window.dps 
+                                                }]
+                                            });
+
+                                            console.log(dps);
+                                            chart.render();	
+                                    }
+                                },
+                                error: function (request,error) {
+                                    alert('Network error has occurred please try again!');
+                                }
+                            });
+                         	
+
+                };
+
+                // generates first set of dataPoints
+                updateChart(); 
+                  console.log(dps);
+                // update chart after specified time. 
+                setInterval(function(){updateChart()}, updateInterval); 
+            }
+                    
+        
+        
+            function getValueSensor(kodeSensor,typeSensor){
+                var listTypeSensor = null;
+                 $.ajax({url: baseUrl+"/type_sensor.php?kode_type="+typeSensor,
+                    dataType: "jsonp",
+                    async: true,
+                    success: function (result) {
+                        result = jQuery.makeArray(result);
+                        //console.log(result[0]);
+                        var nilai = result[0]["value"];
+                        //console.log(nilai);
+                        $.each(nilai, function(index,v) {                        
+                            //console.log(v)  ;
+                            $("#namaType").html(v['nama_type']);
+                            getValue(v, kodeSensor);
+                        });
+                        
+                        $("#listType").listview('refresh');
+                    },
+                    error: function (request,error) {
+                        alert('Network error has occurred please try again!');
+                    }
+                });    
+        
+                
+            }
+            
+            
+            var kodeSensor = getUrlParameter("kode");
+            var tipeSensor = getUrlParameter("type");
+            $.ajax({url: baseUrl+"/list_sensor.php?kode="+kodeSensor,
+                dataType: "jsonp",
+                async: true,
+                success: function (result) {
+                    result = jQuery.makeArray(result);
+                    //console.log(result[0]);
+                      //  result = JSON.parse(result);
+                    var nilai = result[0]["value"];
+                    //console.log(nilai["value"]);
+                    $.each(nilai, function(index,v) {
+                        $("#title_header").html(v["nama_sensor"]);
+                        $("#namaSensor").html(v["nama_sensor"]);
+                        $("#lokasiSensor").html(v["letak_sensor"]);
+                        if(v["icon"] == null){
+                            $("#iconSensor").addClass("zmdi zmdi-cloud-done zmd-fw");
+                        }else{
+                            $("#iconSensor").addClass("zmdi "+v["icon"]+" zmd-fw");
+                        }
+                        getValueSensor(v["kode_sensor"],tipeSensor);
+                    });
+                },
+                error: function (request,error) {
+                    alert('Network error has occurred please try again!');
+                }
+            });     
+        
+        });
+    </script>
+
+</body>
+</html>
